@@ -44,6 +44,8 @@ declare -a _last_value_RxBytes=()
 computeDeltaForVal ()
 {
 
+    set -x
+
     mac_address="$1"
     current_value="$2"
     last_values_array_name="$3"
@@ -82,8 +84,16 @@ computeDeltaForVal ()
     cmd="${last_values_array_name}"'=( '"${last_values_array[@]}"' )'
     eval ${cmd}
 
+    (
+	set +x
+	echo '========================================='
+	echo "${_last_value_RxBytes[@]}"
+	echo '========================================='
+    ) 1>&2
+
     # return the new array
     echo ${delta}
+    set +x
 }
 
 
@@ -96,17 +106,14 @@ computeDeltaForVal ()
 
 makeStatLine ()
 {
-    device="$1"
+    mac_address="$1"
     lb_interface="$2"
-    
-    stat_line=$( echo "${device}" | jq -c '.' )
-    mac_address=$( echo "${stat_line}" | jq '."MACAddress"' | sed -e 's/^\"//' -e 's/\"$//' )
+
     model_for_mac_address=$( ${SYSBUS} -model "Hosts.Host.${mac_address}" )
 
     model_IPAddress=$( getMibParameter "${model_for_mac_address}" 'IPAddress' )
     model_HostName=$( getMibParameter "${model_for_mac_address}" 'HostName' )
     model_XORANGECOM_InterfaceTypes=$( getMibParameter "${model_for_mac_address}" 'X_ORANGE-COM_InterfaceType' )
-
 
     stat_line_extends='"version": "1.1"'
     stat_line_extends=${stat_line_extends}', "host":"s-ku2raph"'
@@ -121,15 +128,15 @@ makeStatLine ()
     # DELTA computations
     #
     Rx_Retransmissions=$( getMibParameter "${model_for_mac_address}" 'Rx_Retransmissions' )
-    delta=$( computeDeltaForVal "${device}" "${Rx_Retransmissions}" "_last_value_Rx_Retransmissions" )
+    delta=$( computeDeltaForVal "${device_model}" "${Rx_Retransmissions}" "_last_value_Rx_Retransmissions" )
     stat_line_extends=${stat_line_extends}', "Rx_Retransmissions_delta":"'${delta}'"'
 
     TxBytes=$( getMibParameter "${model_for_mac_address}" 'TxBytes' )
-    delta=$( computeDeltaForVal "${device}" "${TxBytes}" "_last_value_TxBytes" )
+    delta=$( computeDeltaForVal "${device_model}" "${TxBytes}" "_last_value_TxBytes" )
     stat_line_extends=${stat_line_extends}', "TxBytes_delta":"'${delta}'"'
 
     RxBytes=$( getMibParameter "${model_for_mac_address}" 'RxBytes' )
-    delta=$( computeDeltaForVal "${device}" "${RxBytes}" "_last_value_RxBytes" )
+    delta=$( computeDeltaForVal "${device_model}" "${RxBytes}" "_last_value_RxBytes" )
     stat_line_extends=${stat_line_extends}', "RxBytes_delta":"'${delta}'"'
 
     json_extends="{ ${stat_line_extends} }"
@@ -142,21 +149,31 @@ makeStatLine ()
 }
 
 
+unquoteMacAddress ()
+{
+    quoted_mac_address="$1"
+    unquoted_mac_address=$( echo "${quoted_mac_address}" | sed -e 's/^\"//' -e 's/\"$//' )
+
+    echo "${unquoted_mac_address}"
+}
+
 while true
 do
 
-    WIFI24G_DEVICEs=$(
-	${SYSBUS}  -MIBs wl0 | jq -c '.["status"] | .["wlanvap"] | .["wl0"] | .["AssociatedDevice" ] | .[]'
-		   )
+    WIFI24G_DEVICE_MAC_ADDRESSES=$(
+	${SYSBUS}  -MIBs wl0 | jq -c '.["status"] | .["wlanvap"] | .["wl0"] | .["AssociatedDevice" ] | .[] | ."MACAddress"' | \
+	    sed -e 's/^\"//' -e 's/\"$//'
+				)
 
-    WIFI5G_DEVICEs=$(
-	${SYSBUS}  -MIBs eth6 | jq -c '.["status"] | .["wlanvap"] | .["eth6"] | .["AssociatedDevice" ] | .[]'
+    WIFI5G_DEVICE_MAC_ADDRESSES=$(
+	${SYSBUS}  -MIBs eth6 | jq -c '.["status"] | .["wlanvap"] | .["eth6"] | .["AssociatedDevice" ] | .[] | ."MACAddress"' | \
+	    sed -e 's/^\"//' -e 's/\"$//'
 		  )
 
+    WIFI24G_DEVICE_MAC_ADDRESSES=''
+    WIFI5G_DEVICE_MAC_ADDRESSES="64:80:99:CB:C3:20"
 
-    WIFI_ASSOCIATED_DEVICEs="${WIFI24G_DEVICEs} ${WIFI5G_DEVICEs}"
-
-    for d in ${WIFI24G_DEVICEs}
+    for d in ${WIFI24G_DEVICE_MAC_ADDRESSES}
     do
 
 	GELF_stat_line=$( makeStatLine "${d}" "wl0" )
@@ -164,7 +181,7 @@ do
 
     done
 
-    for d in ${WIFI5G_DEVICEs}
+    for d in ${WIFI5G_DEVICE_MAC_ADDRESSES}
     do
 
 	GELF_stat_line=$( makeStatLine "${d}" "eth6" )
@@ -175,9 +192,6 @@ do
     sleep ${LOOP_DELAY}
     
 done
-
-
-
 
 
 
