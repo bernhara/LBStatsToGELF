@@ -109,11 +109,15 @@ makeStatLine ()
     stat_line_extends=${stat_line_extends}', "IPAddress":"'${model_IPAddress}'"'
     stat_line_extends=${stat_line_extends}', "X_ORANGE-COM_InterfaceTypes":"'${model_XORANGECOM_InterfaceTypes}'"'
 
+    Rx_Retransmissions=$( getMibParameter "${model_for_mac_address}" 'Rx_Retransmissions' )
+    delta=$( computeDeltaForVal "${device}" "${Rx_Retransmissions}" "_last_value_Rx_Retransmissions" )
+    stat_line_extends=${stat_line_extends}', "Rx_Retransmissions_delta":"'${delta}'"'
+
     json_extends="{ ${stat_line_extends} }"
-    echo ${json_extends}
+    echo ${json_extends} 1>&2
 
     GELF_stat_to_send=$( echo "${stat_line}" | jq -c ". += ${json_extends}" )
-    echo "${GELF_stat_to_send}"
+    echo "${GELF_stat_to_send}" 1>&2
 	
     echo "${GELF_stat_line}"
 }
