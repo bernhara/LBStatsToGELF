@@ -60,9 +60,6 @@ function getDeltaForVal ()
     current_value="$2"
     last_values_array_name="$3"
 
-    cmd="last_values_array=( \"\${"${last_values_array_name}"[@]}\" )"
-    eval ${cmd}
-
     entry_found=false
     for host_index in $( seq 0 "${#_known_mac_addresses[@]}" )
     do
@@ -76,7 +73,9 @@ function getDeltaForVal ()
     
     if ${entry_found}
     then
-    	last_recorded_value=${last_values_array[${host_index}]}
+	# get the stored value
+	cmd='last_recorded_value=${'${last_values_array_name}'['${host_index}']}'
+	eval "${cmd}"
     	if [[ -n "${last_recorded_value}" ]]
     	then
     	    delta=$(( "${current_value}" - "${last_recorded_value}" ))
@@ -84,22 +83,8 @@ function getDeltaForVal ()
     	    delta=0
     	fi
     else
-    	# record the newly discoverd host
-    	_known_mac_addresses[${host_index}]="${mac_address}"
     	delta=0
     fi
-
-    last_values_array[${host_index}]=${current_value}
-
-    cmd="${last_values_array_name}"'=( '"${last_values_array[@]}"' )'
-    eval ${cmd}
-
-    (
-	set +x
-	echo '========================================='
-	echo "${_last_value_RxBytes[@]}"
-	echo '========================================='
-    ) 1>&2
 
     # return the new array
     echo ${delta}
@@ -107,6 +92,8 @@ function getDeltaForVal ()
 
 function updateMemorizedDataInArray ()
 {
+
+    echo "ZZZZZ1: ${#_known_mac_addresses[@]}"
 
     mac_address="$1"
     value="$2"
@@ -131,8 +118,10 @@ function updateMemorizedDataInArray ()
 	_known_mac_addresses[${host_index}]="${mac_address}"
     fi
 
-    cmd="${last_values_array_name}${host_index}=${value}"
-    eval ${cmd}
+    cmd="${last_values_array_name}[${host_index}]=${value}"
+    eval "${cmd}"
+
+    echo "ZZZZZ2: ${#_known_mac_addresses[@]}"
 }
 
 
@@ -174,17 +163,19 @@ makeStatLine ()
     # DELTA computations
     #
     Rx_Retransmissions=$( getMibParameter "${mib_data_for_mac}" 'Rx_Retransmissions' )
-    delta=$( computeDeltaForVal "${mac_address}" "${Rx_Retransmissions}" "_last_value_Rx_Retransmissions" )
+    delta=$( getDeltaForVal "${mac_address}" "${Rx_Retransmissions}" "_last_value_Rx_Retransmissions" )
     stat_line_extends=${stat_line_extends}', "Rx_Retransmissions_delta":"'${delta}'"'
 
     set -x
     TxBytes=$( getMibParameter "${mib_data_for_mac}" 'TxBytes' )
-    delta=$( computeDeltaForVal "${mac_address}" "${TxBytes}" "_last_value_TxBytes" )
+    delta=$( getDeltaForVal "${mac_address}" "${TxBytes}" "_last_value_TxBytes" )
+    updateMemorizedDataInArray "${mac_address}" "${TxBytes}" "_last_value_TxBytes"
+    echo "ZZZZZ3: ${#_known_mac_addresses[@]}"
     stat_line_extends=${stat_line_extends}', "TxBytes_delta":"'${delta}'"'
     set +x
 
     RxBytes=$( getMibParameter "${mib_data_for_mac}" 'RxBytes' )
-    delta=$( computeDeltaForVal "${mac_address}" "${RxBytes}" "_last_value_RxBytes" )
+    delta=$( getDeltaForVal "${mac_address}" "${RxBytes}" "_last_value_RxBytes" )
     stat_line_extends=${stat_line_extends}', "RxBytes_delta":"'${delta}'"'
 
     json_extends="{ ${stat_line_extends} }"
