@@ -109,6 +109,11 @@ makeStatLine ()
     mac_address="$1"
     lb_interface="$2"
 
+    stat_line=$(
+	${SYSBUS} -MIBs ${lb_interface} | \
+	    jq -c '.["status"] | .["wlanvap"] | .["'${lb_interface}'"] | .["AssociatedDevice" ] | ."'${mac_address}'"'
+	     )
+
     model_for_mac_address=$( ${SYSBUS} -model "Hosts.Host.${mac_address}" )
 
     model_IPAddress=$( getMibParameter "${model_for_mac_address}" 'IPAddress' )
