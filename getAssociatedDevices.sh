@@ -4,6 +4,18 @@
 
 : ${LOOP_DELAY=5m}
 
+: ${GELF_SERVER_HOSTNAME:=''}
+: ${GELF_SERVER_UDP_PORT:='12201'}
+
+if [[ -z "${GELF_SERVER_HOSTNAME}" ]]
+then
+    echo "ERROR: GELF_SERVER_HOSTNAME variable not set" 1>&2
+    exit 1
+fi
+
+declare -a _known_mac_addresses
+declare -a _last_value_Rx_Retransmissions
+
 getMibParameter ()
 {
     model="$1"
@@ -20,6 +32,47 @@ getMibParameter ()
 
     echo "${unquoted_param_value}"
 }
+
+declare -a _known_mac_addresses
+declare -a _last_value_Rx_Retransmissions
+
+computeDeltaForVal ()
+{
+    mac_address="$1"
+    current_value="$2"
+    last_values="$3"
+
+    entry_found=false
+    for host_index in $( seq ${#known_adresses[@]} )
+    do
+	if [[ "${_last_value_Rx_Retransmissions[${host_index}]" == "${mac_address}" ]]
+	then
+	    # found it
+	    entry_found=true
+	    break
+	fi
+    done
+    
+    if ${entry_found}
+    then
+	last_recored_value=${last_values[${host_index}]}
+	if [[ -n "${last_recored_value}" ]]
+	then
+	    delta=$(( "${current_value}" - "${last_recored_value}" ))
+	else
+	    delta=0
+	fi
+    else
+	# record the newly discoverd host
+	_last_value_Rx_Retransmissions[${host_index}]="${mac_address}"
+	delta=0
+    fi
+    last_values[${host_index}]="${current_value}"
+
+    # return the new array
+    echo "${last_values[@]}"
+}
+
 
 
 
