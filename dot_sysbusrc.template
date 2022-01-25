@@ -1,0 +1,9 @@
+[main]
+url_livebox = http://livebox.home/
+user_livebox = admin
+password_livebox = ===XXXXXXXXXXXXXXXXX===
+version_livebox = lb4
+
+[minecraft]
+port = 54520
+
