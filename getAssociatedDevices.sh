@@ -5,11 +5,17 @@
 : ${LOOP_DELAY:=5m}
 
 : ${GELF_SERVER_HOSTNAME:=''}
-: ${GELF_SERVER_UDP_PORT:='12201'}
+: ${GELF_SERVER_UDP_PORT:=''}
 
 if [[ -z "${GELF_SERVER_HOSTNAME}" ]]
 then
     echo "ERROR: GELF_SERVER_HOSTNAME variable not set" 1>&2
+    exit 1
+fi
+
+if [[ -z "${GELF_SERVER_UDP_PORT}" ]]
+then
+    echo "ERROR: GELF_SERVER_UDP_PORT variable not set" 1>&2
     exit 1
 fi
 
@@ -119,7 +125,7 @@ makeStatLine ()
     GELF_stat_to_send=$( echo "${stat_line}" | jq -c ". += ${json_extends}" )
     echo "${GELF_stat_to_send}" 1>&2
 	
-    echo "${GELF_stat_line}"
+    echo "${GELF_stat_to_send}"
 }
 
 
@@ -141,7 +147,8 @@ do
     do
 
 	GELF_stat_line=$( makeStatLine "${d}" "wl0" )
-	echo -n "${GELF_stat_line}" | nc -w0 -v -u t3620 12202
+	echo -n "${GELF_stat_line}" | nc -w0 -v -u "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
+	echo "ZZZZZZZZZZZZZZZZZZZZ ${GELF_stat_line}" | nc -w0 -v "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
 
     done
 
@@ -149,7 +156,8 @@ do
     do
 
 	GELF_stat_line=$( makeStatLine "${d}" "eth6" )
-	echo -n "${GELF_stat_line}" | nc -w0 -v -u t3620 12202
+	echo -n "${GELF_stat_line}" | nc -w0 -v -u "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
+	echo "XXXXXXXXXXXXXXXXXX ${GELF_stat_line}" | nc -w0 -v "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
 
     done
 
