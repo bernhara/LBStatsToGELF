@@ -131,7 +131,6 @@ makeStatLine ()
     #
 
     json_extends="{ ${stat_line_extends} }"
-    echo ${json_extends} 1>&2
 
     GELF_stat_to_send=$( echo "${stat_line}" | jq -c ". += ${json_extends}" )
     echo "${GELF_stat_to_send}" 1>&2
