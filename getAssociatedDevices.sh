@@ -122,11 +122,9 @@ makeStatLine ()
     delta=$( getDeltaForVal "${mac_address}" "${Rx_Retransmissions}" "Rx_Retransmissions" )
     stat_line_extends=${stat_line_extends}', "Rx_Retransmissions_delta":"'${delta}'"'
 
-    set -x
     TxBytes=$( getMibParameter "${mib_data_for_mac}" 'TxBytes' )
     delta=$( getDeltaForVal "${mac_address}" "${TxBytes}" "TxBytes" )
     stat_line_extends=${stat_line_extends}', "TxBytes_delta":"'${delta}'"'
-    set +x
 
     RxBytes=$( getMibParameter "${mib_data_for_mac}" 'RxBytes' )
     delta=$( getDeltaForVal "${mac_address}" "${RxBytes}" "RxBytes" )
