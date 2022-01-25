@@ -126,25 +126,9 @@ makeStatLine ()
 
     done
 
-    # Rx_Retransmissions=$( getMibParameter "${mib_data_for_mac}" 'Rx_Retransmissions' )
-    # delta=$( getDeltaForVal "${mac_address}" "${Rx_Retransmissions}" "Rx_Retransmissions" )
-    # stat_line_extends=${stat_line_extends}', "Rx_Retransmissions_delta":"'${delta}'"'
-
-    # TxBytes=$( getMibParameter "${mib_data_for_mac}" 'TxBytes' )
-    # delta=$( getDeltaForVal "${mac_address}" "${TxBytes}" "TxBytes" )
-    # stat_line_extends=${stat_line_extends}', "TxBytes_delta":"'${delta}'"'
-
-    # RxBytes=$( getMibParameter "${mib_data_for_mac}" 'RxBytes' )
-    # delta=$( getDeltaForVal "${mac_address}" "${RxBytes}" "RxBytes" )
-    # stat_line_extends=${stat_line_extends}', "RxBytes_delta":"'${delta}'"'
-
-    # param_value=$( getMibParameter "${mib_data_for_mac}" 'RxPacketCount' )
-    # delta=$( getDeltaForVal "${mac_address}" "${param_value}" "RxPacketCount" )
-    # stat_line_extends=${stat_line_extends}', "RxPacketCount_delta":"'${delta}'"'
-    
-    # param_value=$( getMibParameter "${mib_data_for_mac}" 'TxPacketCount' )
-    # delta=$( getDeltaForVal "${mac_address}" "${param_value}" "TxPacketCount" )
-    # stat_line_extends=${stat_line_extends}', "TxPacketCount_delta":"'${delta}'"'
+    #
+    # build complete stat line
+    #
 
     json_extends="{ ${stat_line_extends} }"
     echo ${json_extends} 1>&2
