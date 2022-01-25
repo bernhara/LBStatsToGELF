@@ -148,7 +148,6 @@ do
 
 	GELF_stat_line=$( makeStatLine "${d}" "wl0" )
 	echo -n "${GELF_stat_line}" | nc -w0 -v -u "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
-	echo "ZZZZZZZZZZZZZZZZZZZZ ${GELF_stat_line}" | nc -w0 -v "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
 
     done
 
@@ -157,7 +156,6 @@ do
 
 	GELF_stat_line=$( makeStatLine "${d}" "eth6" )
 	echo -n "${GELF_stat_line}" | nc -w0 -v -u "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
-	echo "XXXXXXXXXXXXXXXXXX ${GELF_stat_line}" | nc -w0 -v "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
 
     done
 
