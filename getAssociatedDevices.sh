@@ -38,6 +38,8 @@ getMibParameter ()
 
 declare -a _known_mac_addresses=()
 declare -a _last_value_Rx_Retransmissions=()
+declare -a _last_value_TxBytes=()
+declare -a _last_value_RxBytes=()
 
 computeDeltaForVal ()
 {
@@ -115,9 +117,20 @@ makeStatLine ()
     stat_line_extends=${stat_line_extends}', "IPAddress":"'${model_IPAddress}'"'
     stat_line_extends=${stat_line_extends}', "X_ORANGE-COM_InterfaceTypes":"'${model_XORANGECOM_InterfaceTypes}'"'
 
+    #
+    # DELTA computations
+    #
     Rx_Retransmissions=$( getMibParameter "${model_for_mac_address}" 'Rx_Retransmissions' )
     delta=$( computeDeltaForVal "${device}" "${Rx_Retransmissions}" "_last_value_Rx_Retransmissions" )
     stat_line_extends=${stat_line_extends}', "Rx_Retransmissions_delta":"'${delta}'"'
+
+    TxBytes=$( getMibParameter "${model_for_mac_address}" 'TxBytes' )
+    delta=$( computeDeltaForVal "${device}" "${TxBytes}" "_last_value_TxBytes" )
+    stat_line_extends=${stat_line_extends}', "TxBytes_delta":"'${delta}'"'
+
+    RxBytes=$( getMibParameter "${model_for_mac_address}" 'RxBytes' )
+    delta=$( computeDeltaForVal "${device}" "${RxBytes}" "_last_value_RxBytes" )
+    stat_line_extends=${stat_line_extends}', "RxBytes_delta":"'${delta}'"'
 
     json_extends="{ ${stat_line_extends} }"
     echo ${json_extends} 1>&2
