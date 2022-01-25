@@ -19,7 +19,7 @@ then
     exit 1
 fi
 
-getMibParameter ()
+getModelParameter ()
 {
     model="$1"
     param_name="$2"
@@ -36,15 +36,25 @@ getMibParameter ()
     echo "${unquoted_param_value}"
 }
 
+getMibParameter ()
+{
+    json_data_for_mac="$1"
+    param_name="$2"
+
+    param_value=$(
+	echo "${json_data_for_mac}" | jq -c '."'${param_name}'"'
+	)
+
+    echo "${param_value}"
+}
+
 declare -a _known_mac_addresses=()
 declare -a _last_value_Rx_Retransmissions=()
 declare -a _last_value_TxBytes=()
 declare -a _last_value_RxBytes=()
 
-computeDeltaForVal ()
+function getDeltaForVal ()
 {
-
-    set -x
 
     mac_address="$1"
     current_value="$2"
@@ -66,10 +76,10 @@ computeDeltaForVal ()
     
     if ${entry_found}
     then
-    	last_recored_value=${last_values_array[${host_index}]}
-    	if [[ -n "${last_recored_value}" ]]
+    	last_recorded_value=${last_values_array[${host_index}]}
+    	if [[ -n "${last_recorded_value}" ]]
     	then
-    	    delta=$(( "${current_value}" - "${last_recored_value}" ))
+    	    delta=$(( "${current_value}" - "${last_recorded_value}" ))
     	else
     	    delta=0
     	fi
@@ -93,7 +103,36 @@ computeDeltaForVal ()
 
     # return the new array
     echo ${delta}
-    set +x
+}
+
+function updateMemorizedDataInArray ()
+{
+
+    mac_address="$1"
+    value="$2"
+    last_values_array_name="$3"
+
+    entry_found=false
+    for host_index in $( seq 0 "${#_known_mac_addresses[@]}" )
+    do
+    	if [[ "${_known_mac_addresses[${host_index}]}" == "${mac_address}" ]]
+    	then
+    	    # found it
+    	    entry_found=true
+    	    break
+    	fi
+    done
+    
+    if ${entry_found}
+    then
+	# we already have indexed this mac address
+	:
+    else
+	_known_mac_addresses[${host_index}]="${mac_address}"
+    fi
+
+    cmd="${last_values_array_name}${host_index}=${value}"
+    eval ${cmd}
 }
 
 
@@ -109,16 +148,18 @@ makeStatLine ()
     mac_address="$1"
     lb_interface="$2"
 
-    stat_line=$(
+    mib_data_for_mac=$(
 	${SYSBUS} -MIBs ${lb_interface} | \
 	    jq -c '.["status"] | .["wlanvap"] | .["'${lb_interface}'"] | .["AssociatedDevice" ] | ."'${mac_address}'"'
-	     )
+		    )
+
+    stat_line="${mib_data_for_mac}"
 
     model_for_mac_address=$( ${SYSBUS} -model "Hosts.Host.${mac_address}" )
 
-    model_IPAddress=$( getMibParameter "${model_for_mac_address}" 'IPAddress' )
-    model_HostName=$( getMibParameter "${model_for_mac_address}" 'HostName' )
-    model_XORANGECOM_InterfaceTypes=$( getMibParameter "${model_for_mac_address}" 'X_ORANGE-COM_InterfaceType' )
+    model_IPAddress=$( getModelParameter "${model_for_mac_address}" 'IPAddress' )
+    model_HostName=$( getModelParameter "${model_for_mac_address}" 'HostName' )
+    model_XORANGECOM_InterfaceTypes=$( getModelParameter "${model_for_mac_address}" 'X_ORANGE-COM_InterfaceType' )
 
     stat_line_extends='"version": "1.1"'
     stat_line_extends=${stat_line_extends}', "host":"s-ku2raph"'
@@ -132,16 +173,18 @@ makeStatLine ()
     #
     # DELTA computations
     #
-    Rx_Retransmissions=$( getMibParameter "${model_for_mac_address}" 'Rx_Retransmissions' )
-    delta=$( computeDeltaForVal "${device_model}" "${Rx_Retransmissions}" "_last_value_Rx_Retransmissions" )
+    Rx_Retransmissions=$( getMibParameter "${mib_data_for_mac}" 'Rx_Retransmissions' )
+    delta=$( computeDeltaForVal "${mac_address}" "${Rx_Retransmissions}" "_last_value_Rx_Retransmissions" )
     stat_line_extends=${stat_line_extends}', "Rx_Retransmissions_delta":"'${delta}'"'
 
-    TxBytes=$( getMibParameter "${model_for_mac_address}" 'TxBytes' )
-    delta=$( computeDeltaForVal "${device_model}" "${TxBytes}" "_last_value_TxBytes" )
+    set -x
+    TxBytes=$( getMibParameter "${mib_data_for_mac}" 'TxBytes' )
+    delta=$( computeDeltaForVal "${mac_address}" "${TxBytes}" "_last_value_TxBytes" )
     stat_line_extends=${stat_line_extends}', "TxBytes_delta":"'${delta}'"'
+    set +x
 
-    RxBytes=$( getMibParameter "${model_for_mac_address}" 'RxBytes' )
-    delta=$( computeDeltaForVal "${device_model}" "${RxBytes}" "_last_value_RxBytes" )
+    RxBytes=$( getMibParameter "${mib_data_for_mac}" 'RxBytes' )
+    delta=$( computeDeltaForVal "${mac_address}" "${RxBytes}" "_last_value_RxBytes" )
     stat_line_extends=${stat_line_extends}', "RxBytes_delta":"'${delta}'"'
 
     json_extends="{ ${stat_line_extends} }"
