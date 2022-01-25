@@ -2,7 +2,7 @@
 
 : ${SYSBUS:=/home/bibi/Rene-d-Sysbus/sysbus/sysbus.sh}
 
-: ${LOOP_DELAY=5m}
+: ${LOOP_DELAY:=5m}
 
 : ${GELF_SERVER_HOSTNAME:=''}
 : ${GELF_SERVER_UDP_PORT:='12201'}
@@ -12,9 +12,6 @@ then
     echo "ERROR: GELF_SERVER_HOSTNAME variable not set" 1>&2
     exit 1
 fi
-
-declare -a _known_mac_addresses
-declare -a _last_value_Rx_Retransmissions
 
 getMibParameter ()
 {
@@ -33,45 +30,65 @@ getMibParameter ()
     echo "${unquoted_param_value}"
 }
 
-declare -a _known_mac_addresses
-declare -a _last_value_Rx_Retransmissions
+declare -a _known_mac_addresses=()
+declare -a _last_value_Rx_Retransmissions=()
 
 computeDeltaForVal ()
 {
+
     mac_address="$1"
     current_value="$2"
-    last_values="$3"
+    last_values_array_name="$3"
+
+    cmd="last_values_array=( \"\${"${last_values_array_name}"[@]}\" )"
+    eval ${cmd}
 
     entry_found=false
-    for host_index in $( seq ${#known_adresses[@]} )
+    for host_index in $( seq 0 "${#_known_mac_addresses[@]}" )
     do
-	if [[ "${_last_value_Rx_Retransmissions[${host_index}]" == "${mac_address}" ]]
-	then
-	    # found it
-	    entry_found=true
-	    break
-	fi
+    	if [[ "${_known_mac_addresses[${host_index}]}" == "${mac_address}" ]]
+    	then
+    	    # found it
+    	    entry_found=true
+    	    break
+    	fi
     done
     
     if ${entry_found}
     then
-	last_recored_value=${last_values[${host_index}]}
-	if [[ -n "${last_recored_value}" ]]
-	then
-	    delta=$(( "${current_value}" - "${last_recored_value}" ))
-	else
-	    delta=0
-	fi
+    	last_recored_value=${last_values_array[${host_index}]}
+    	if [[ -n "${last_recored_value}" ]]
+    	then
+    	    delta=$(( "${current_value}" - "${last_recored_value}" ))
+    	else
+    	    delta=0
+    	fi
     else
-	# record the newly discoverd host
-	_last_value_Rx_Retransmissions[${host_index}]="${mac_address}"
-	delta=0
+    	# record the newly discoverd host
+    	_known_mac_addresses[${host_index}]="${mac_address}"
+    	delta=0
     fi
-    last_values[${host_index}]="${current_value}"
+
+    last_values_array[${host_index}]=${current_value}
+
+    cmd="${last_values_array_name}"'=( '"${last_values_array[@]}"' )'
+    eval ${cmd}
+
+    echo "${last_values_array[@]}" 1>&2
+    echo "${_last_value_Rx_Retransmissions[@]}" 1>&2
 
     # return the new array
-    echo "${last_values[@]}"
+    echo ${delta}
 }
+
+
+computeDeltaForVal 'A8:B8:6E:81:37:4E' 10 "_last_value_Rx_Retransmissions"
+echo "=================================== ${_known_mac_addresses} ${_last_value_Rx_Retransmissions[@]}" 1>&2
+computeDeltaForVal A8:B8:6E:81:37:4E 12 "_last_value_Rx_Retransmissions"
+echo "=================================== ${_known_mac_addresses} ${_last_value_Rx_Retransmissions[@]}" 1>&2
+computeDeltaForVal A8:B8:6E:81:37:4E 9 "_last_value_Rx_Retransmissions"
+echo "=================================== ${_known_mac_addresses} ${_last_value_Rx_Retransmissions[@]}" 1>&2
+exit 1
 
 
 
