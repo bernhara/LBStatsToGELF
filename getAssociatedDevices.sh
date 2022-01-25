@@ -48,40 +48,31 @@ getMibParameter ()
     echo "${param_value}"
 }
 
-declare -a _known_mac_addresses=()
-declare -a _last_value_Rx_Retransmissions=()
-declare -a _last_value_TxBytes=()
-declare -a _last_value_RxBytes=()
+_tmp_dir=$( mktemp --directory )
+if [[ -z "${KEEP_TMP}" ]]
+then
+    trap "rm -rf ${_tmp_dir}" 0
+fi
 
 function getDeltaForVal ()
 {
 
     mac_address="$1"
     current_value="$2"
-    last_values_array_name="$3"
+    values_name="$3"
 
-    entry_found=false
-    for host_index in $( seq 0 "${#_known_mac_addresses[@]}" )
-    do
-    	if [[ "${_known_mac_addresses[${host_index}]}" == "${mac_address}" ]]
-    	then
-    	    # found it
-    	    entry_found=true
-    	    break
-    	fi
-    done
-    
-    if ${entry_found}
+    lastValueFileName="${_tmp_dir}/${mac_address}.${values_name}"
+    if [[ -f "${lastValueFileName}" ]]
     then
-	# get the stored value
-	cmd='last_recorded_value=${'${last_values_array_name}'['${host_index}']}'
-	eval "${cmd}"
-    	if [[ -n "${last_recorded_value}" ]]
-    	then
-    	    delta=$(( "${current_value}" - "${last_recorded_value}" ))
-    	else
-    	    delta=0
-    	fi
+	last_recorded_value=$( cat "${lastValueFileName}" )
+    fi
+
+    # store last value
+    echo "${current_value}" > "${lastValueFileName}"
+
+    if [[ -n "${last_recorded_value}" ]]
+    then
+    	delta=$(( "${current_value}" - "${last_recorded_value}" ))
     else
     	delta=0
     fi
@@ -89,41 +80,6 @@ function getDeltaForVal ()
     # return the new array
     echo ${delta}
 }
-
-function updateMemorizedDataInArray ()
-{
-
-    echo "ZZZZZ1: ${#_known_mac_addresses[@]}"
-
-    mac_address="$1"
-    value="$2"
-    last_values_array_name="$3"
-
-    entry_found=false
-    for host_index in $( seq 0 "${#_known_mac_addresses[@]}" )
-    do
-    	if [[ "${_known_mac_addresses[${host_index}]}" == "${mac_address}" ]]
-    	then
-    	    # found it
-    	    entry_found=true
-    	    break
-    	fi
-    done
-    
-    if ${entry_found}
-    then
-	# we already have indexed this mac address
-	:
-    else
-	_known_mac_addresses[${host_index}]="${mac_address}"
-    fi
-
-    cmd="${last_values_array_name}[${host_index}]=${value}"
-    eval "${cmd}"
-
-    echo "ZZZZZ2: ${#_known_mac_addresses[@]}"
-}
-
 
 # delta=$( computeDeltaForVal 'A8:B8:6E:81:37:4E' 10 "_last_value_Rx_Retransmissions" )
 # echo "=================================== ${_known_mac_addresses} ${_last_value_Rx_Retransmissions[@]}" 1>&2
@@ -163,19 +119,17 @@ makeStatLine ()
     # DELTA computations
     #
     Rx_Retransmissions=$( getMibParameter "${mib_data_for_mac}" 'Rx_Retransmissions' )
-    delta=$( getDeltaForVal "${mac_address}" "${Rx_Retransmissions}" "_last_value_Rx_Retransmissions" )
+    delta=$( getDeltaForVal "${mac_address}" "${Rx_Retransmissions}" "Rx_Retransmissions" )
     stat_line_extends=${stat_line_extends}', "Rx_Retransmissions_delta":"'${delta}'"'
 
     set -x
     TxBytes=$( getMibParameter "${mib_data_for_mac}" 'TxBytes' )
-    delta=$( getDeltaForVal "${mac_address}" "${TxBytes}" "_last_value_TxBytes" )
-    updateMemorizedDataInArray "${mac_address}" "${TxBytes}" "_last_value_TxBytes"
-    echo "ZZZZZ3: ${#_known_mac_addresses[@]}"
+    delta=$( getDeltaForVal "${mac_address}" "${TxBytes}" "TxBytes" )
     stat_line_extends=${stat_line_extends}', "TxBytes_delta":"'${delta}'"'
     set +x
 
     RxBytes=$( getMibParameter "${mib_data_for_mac}" 'RxBytes' )
-    delta=$( getDeltaForVal "${mac_address}" "${RxBytes}" "_last_value_RxBytes" )
+    delta=$( getDeltaForVal "${mac_address}" "${RxBytes}" "RxBytes" )
     stat_line_extends=${stat_line_extends}', "RxBytes_delta":"'${delta}'"'
 
     json_extends="{ ${stat_line_extends} }"
