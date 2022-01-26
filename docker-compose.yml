@@ -12,6 +12,6 @@ services:
          - LOOP_DELAY=${LOOP_DELAY:-5m}
          - GELF_SERVER_HOSTNAME=${GELF_SERVER_HOSTNAME:-}
          - GELF_SERVER_UDP_PORT=${GELF_SERVER_UDP_PORT:-12201}
-      command: /bin/bash -x /app/sendLBMibStatsToGELFServer.sh
+#      command: /bin/bash -x /app/sendLBMibStatsToGELFServer.sh
       volumes:
          - ./dot_sysbusrc:/root/.sysbusrc:ro
