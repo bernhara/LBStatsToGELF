@@ -51,7 +51,7 @@ getMibParameter ()
 _tmp_dir=$( mktemp --directory )
 if [[ -z "${KEEP_TMP}" ]]
 then
-    trap "rm -rf ${_tmp_dir}" 0
+    trap "rm -r ${_tmp_dir}" EXIT
 fi
 
 function getDeltaForVal ()
