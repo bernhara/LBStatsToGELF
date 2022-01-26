@@ -126,7 +126,7 @@ makeStatLine ()
     json_extends="{ ${stat_line_extends} }"
 
     GELF_stat_to_send=$( echo "${stat_line}" | jq -c ". += ${json_extends}" )
-    echo "${GELF_stat_to_send}" 1>&2
+    echo "GELF frame: ${GELF_stat_to_send}" 1>&2
 	
     echo "${GELF_stat_to_send}"
 }
@@ -175,38 +175,3 @@ do
     sleep ${LOOP_DELAY}
     
 done
-
-
-
-
-# OBJECT NAME: 'Hosts.Host.A8:B8:6E:81:37:4E'  (name: 37)
-# parameter:  IPAddress            : string     = ''
-# parameter:  AddressSource        : string     = 'None'
-# parameter:  LeaseTimeRemaining   : int32      = '85495'
-# parameter:  MACAddress           : string     = 'A8:B8:6E:81:37:4E'
-# parameter:  Layer2Interface      : string     = 'eth2'
-# parameter:  VendorClassID        : string     = 'android-dhcp-9'
-# parameter:  ClientID             : string     = '01:A8:B8:6E:81:37:4E'
-# parameter:  UserClassID          : string     = ''
-# parameter:  HostName             : string     = 'G6'
-# parameter:  X_ORANGE-COM_InterfaceType : string     = 'Ethernet-Port3'
-# parameter:  Active               : bool       = 'False'
-# parameter:  ManufacturerOUI      : string     = '000000'
-# parameter:  SerialNumber         : string     = ''
-# parameter:  ProductClass         : string     = ''
-# parameter:  X_ORANGE-COM_Prioritized : bool       = 'False'
-# parameter:  X_ORANGE-COM_DiscoveryDeviceName : string     = ''
-# parameter:  X_ORANGE-COM_DiscoveryDeviceType : string     = ''
-# parameter:  X_ORANGE-COM_DetectedTypes : string     = ''
-# parameter:  X_ORANGE-COM_DeviceType : string     = 'Mobile'
-# parameter:  X_ORANGE-COM_UPnPFriendlyNames : string     = ''
-# parameter:  X_ORANGE-COM_mDNSServicesNames : string     = ''
-# parameter:  X_ORANGE-COM_LLTDDevice : bool       = 'False'
-# parameter:  X_ORANGE-COM_LastChange : date_time  = '2022-01-24T16:50:47Z'
-# parameter:  Tags                 : string     = 'lan edev mac physical ssw_sta flowstats ipv4 ipv6 dhcp android events eth'
-# parameter:  X_ORANGE-COM_SSID    : string     = ''
-# parameter:  X_ORANGE-COM_mDNSServiceNumberOfEntries : uint32     = '0'
-# parameter:  X_ORANGE-COM_UPnPDeviceNumberOfEntries : uint32     = '0'
-# parameter:  X_ORANGE-COM_DeviceNamesNumberOfEntries : uint32     = '2'
-# parameter:  IPv4AddressNumberOfEntries : uint32     = '1'
-# parameter:  IPv6AddressNumberOfEntries : uint32     = '0'
