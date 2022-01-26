@@ -14,4 +14,4 @@ ENV LOOP_DELAY=5m
 ENV GELF_SERVER_UDP_PORT=''
 ENV GELF_SERVER_HOSTNAME=''
 
-CMD [ /app/sendLBMibStatsToGELFServer.sh ]
+CMD /app/sendLBMibStatsToGELFServer.sh
