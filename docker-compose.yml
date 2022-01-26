@@ -1,0 +1,16 @@
+# -*- mode: indented-text; tab-width: 3; indent-tabs-mode: nil -*-
+
+version: '3'
+
+services:
+
+   push-lbstats-to-graylog:
+      build: ./Dockerfile
+      image: lbstatstogelf:latest
+      restart: unless-stopped
+      environment:
+         - LOOP_DELAY=${LOOP_DELAY:-5m}
+         - GELF_SERVER_HOSTNAME=${GELF_SERVER_HOSTNAME:-}
+         - GELF_SERVER_UDP_PORT=${GELF_SERVER_UDP_PORT:-12201}
+      volumes:
+         - ./dot_sysbusrc:/root/.sysbusrc:ro
