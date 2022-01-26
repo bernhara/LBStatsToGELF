@@ -81,13 +81,6 @@ function getDeltaForVal ()
     echo ${delta}
 }
 
-# delta=$( computeDeltaForVal 'A8:B8:6E:81:37:4E' 10 "_last_value_Rx_Retransmissions" )
-# echo "=================================== ${_known_mac_addresses} ${_last_value_Rx_Retransmissions[@]}" 1>&2
-# computeDeltaForVal A8:B8:6E:81:37:4E 12 "_last_value_Rx_Retransmissions"
-# echo "=================================== ${_known_mac_addresses} ${_last_value_Rx_Retransmissions[@]}" 1>&2
-# computeDeltaForVal A8:B8:6E:81:37:4E 9 "_last_value_Rx_Retransmissions"
-# echo "=================================== ${_known_mac_addresses} ${_last_value_Rx_Retransmissions[@]}" 1>&2
-
 makeStatLine ()
 {
     mac_address="$1"
