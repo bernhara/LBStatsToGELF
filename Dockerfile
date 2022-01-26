@@ -8,13 +8,8 @@ WORKDIR /app
 
 COPY sendLBMibStatsToGELFServer.sh .
 
-ENV URL_LIVEBOX=http://livebox.home/
-ENV USER_LIVEBOX=admin
-ENV PASSWORD_LIVEBOX=admin
 ENV LOOP_DELAY=5m
 ENV GELF_SERVER_UDP_PORT=''
 ENV GELF_SERVER_HOSTNAME=''
 
 CMD [ /app/sendLBMibStatsToGELFServer.sh ]
-
-
