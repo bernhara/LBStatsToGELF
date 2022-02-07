@@ -131,7 +131,10 @@ makeStatLine ()
     
     gelf_formated_fields=$(
         echo "${json_stat_line}" | \
-	    sed -e 's/"\([^"]*\)"[ \t]*:/"_\1":/g'
+	    sed \
+		-e 's/"\([^"]*\)"[ \t]*:/"_\1":/g' \
+		-e 's/:[ \t]*true/:"true"/g' \
+		-e 's/:[ \t]*false/:"false"/g'
     )
 
     #
@@ -185,8 +188,7 @@ do
     do
 
 	GELF_stat_line=$( makeStatLine "${d}" "wl0" )
-	exit 1
-	echo -n "${GELF_stat_line}" | nc -w 5 -v -u "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
+	echo -n "${GELF_stat_line}" | nc -w 0 -v -u "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
 
     done
 
@@ -194,7 +196,7 @@ do
     do
 
 	GELF_stat_line=$( makeStatLine "${d}" "eth6" )
-	echo -n "${GELF_stat_line}" | nc -w 5 -v -u "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
+	echo -n "${GELF_stat_line}" | nc -w 0 -v -u "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
 
     done
 
