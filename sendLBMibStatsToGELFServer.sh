@@ -1,5 +1,7 @@
 #! /bin/bash
 
+# $Id: $
+
 : ${SYSBUS:=sysbus}
 
 : ${LOOP_DELAY:=5m}
@@ -143,13 +145,19 @@ unquoteMacAddress ()
 while true
 do
 
+    FULL_MIB=$(
+	${SYSBUS}  -MIBs
+    )
+
     WIFI24G_DEVICE_MAC_ADDRESSES=$(
-	${SYSBUS}  -MIBs wl0 | jq -c '.["status"] | .["wlanvap"] | .["wl0"] | .["AssociatedDevice" ] | .[] | ."MACAddress"' | \
+	echo "${FULL_MIB}" | \
+	    jq -c '.["status"] | .["wlanvap"] | .["wl0"] | .["AssociatedDevice" ] | .[] | ."MACAddress"' | \
 	    sed -e 's/^\"//' -e 's/\"$//'
 				)
 
     WIFI5G_DEVICE_MAC_ADDRESSES=$(
-	${SYSBUS}  -MIBs eth6 | jq -c '.["status"] | .["wlanvap"] | .["eth6"] | .["AssociatedDevice" ] | .[] | ."MACAddress"' | \
+	echo "${FULL_MIB}" | \
+	    jq -c '.["status"] | .["wlanvap"] | .["eth6"] | .["AssociatedDevice" ] | .[] | ."MACAddress"' | \
 	    sed -e 's/^\"//' -e 's/\"$//'
 		  )
 
