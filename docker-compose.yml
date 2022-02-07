@@ -9,6 +9,7 @@ services:
       image: lbstatstogelf:latest
       restart: unless-stopped
       environment:
+         - TZ=Europe/Paris
          - LOOP_DELAY=${LOOP_DELAY:-5m}
          - GELF_SERVER_HOSTNAME=${GELF_SERVER_HOSTNAME:-}
          - GELF_SERVER_UDP_PORT=${GELF_SERVER_UDP_PORT:-12201}
