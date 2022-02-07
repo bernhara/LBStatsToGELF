@@ -91,8 +91,6 @@ makeStatLine ()
 	    jq -c '.["status"] | .["wlanvap"] | .["'${lb_interface}'"] | .["AssociatedDevice" ] | ."'${mac_address}'"'
 		    )
 
-    stat_line="${mib_data_for_mac}"
-
     model_for_mac_address=$( ${SYSBUS} -model "Hosts.Host.${mac_address}" )
 
     model_IPAddress=$( getModelParameter "${model_for_mac_address}" 'IPAddress' )
@@ -100,17 +98,18 @@ makeStatLine ()
     model_XORANGECOM_InterfaceTypes=$( getModelParameter "${model_for_mac_address}" 'X_ORANGE-COM_InterfaceType' )
 
 
-    stat_line=${stat_line}', "HostName":"'${model_HostName}'"'
-    stat_line=${stat_line}', "IPAddress":"'${model_IPAddress}'"'
-    stat_line=${stat_line}', "X_ORANGE-COM_InterfaceTypes":"'${model_XORANGECOM_InterfaceTypes}'"'
+    stat_line_extends=''
+
+    stat_line_extends=${stat_line_extends}', "HostName":"'${model_HostName}'"'
+    stat_line_extends=${stat_line_extends}', "IPAddress":"'${model_IPAddress}'"'
+    stat_line_extends=${stat_line_extends}', "X_ORANGE-COM_InterfaceTypes":"'${model_XORANGECOM_InterfaceTypes}'"'
 
     #
     # EXTRA fields, not part of MIB
     #
 
-    stat_line=${stat_line}', "X_lb_interface":"'${lb_interface}'"'
+    stat_line_extends=${stat_line_extends}', "X_lb_interface":"'${lb_interface}'"'
     
-
     #
     # DELTA computations
     #
@@ -118,32 +117,32 @@ makeStatLine ()
     do
 	mib_parameter_value=$( getMibParameter "${mib_data_for_mac}" "${mib_parameter_name}" )
 	delta=$( getDeltaForVal "${mac_address}" "${mib_parameter_value}" "${mib_parameter_name}" )
-	stat_line=${stat_line}', "X_'${mib_parameter_name}'_delta":'${delta}''
+	stat_line_extends=${stat_line_extends}', "X_'${mib_parameter_name}'_delta":'${delta}''
 
     done
 
-    full_stat_line="${
+    json_extends="{ ${stat_line_extends#,} }"
+
+    json_stat_line=$( echo "${mib_data_for_mac}" | jq -c ". += ${json_extends}" )
 
     #
     # convert to GELF syntax
     #
     
     gelf_formated_fields=$(
-        echo "${stat_line} | \
-	    sed -e 's/\"\(.*\)\"[ \t]*:/\"_\1\":/g'
+        echo "${json_stat_line}" | \
+	    sed -e 's/"\([^"]*\)"[ \t]*:/"_\1":/g'
     )
 
     #
     # build complete stat line
     #
 
-    json_gelf_fields_stat_line="{ ${stat_line} }"
-
     gelf_tags='"version": "1.1"'
     gelf_tags=${gelf_tags}', "host":"s-ku2raph"'
     gelf_tags=${gelf_tags}', "short_message":"LB wifi '${LOOP_DELAY}' stat for '${model_HostName}'"'
 
-    GELF_stat_to_send=$( echo "${stat_line}" | jq -c ". += ${json_extends}" )
+    GELF_stat_to_send=$( echo "{ ${gelf_tags} }" | jq -c ". += ${gelf_formated_fields}" )
     echo "GELF frame: ${GELF_stat_to_send}" 1>&2
 	
     echo "${GELF_stat_to_send}"
@@ -184,6 +183,7 @@ do
     do
 
 	GELF_stat_line=$( makeStatLine "${d}" "wl0" )
+	exit 1
 	echo -n "${GELF_stat_line}" | nc -w 5 -v -u "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
 
     done
