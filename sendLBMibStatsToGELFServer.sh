@@ -139,6 +139,8 @@ makeStatLine ()
     #
 
     gelf_tags='"version": "1.1"'
+    timestamp=$( date '+%s.%N' )
+    gelf_tags=${gelf_tags}', "timestamp":'${timestamp}
     gelf_tags=${gelf_tags}', "host":"s-ku2raph"'
     gelf_tags=${gelf_tags}', "short_message":"LB wifi '${LOOP_DELAY}' stat for '${model_HostName}'"'
 
