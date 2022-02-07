@@ -61,6 +61,8 @@ function getDeltaForVal ()
     current_value="$2"
     values_name="$3"
 
+    echo "DELTA: for ${1}/${3}/${2}" 1>&2
+
     lastValueFileName="${_tmp_dir}/${mac_address}.${values_name}"
     if [[ -f "${lastValueFileName}" ]]
     then
@@ -70,6 +72,8 @@ function getDeltaForVal ()
     # store last value
     echo "${current_value}" > "${lastValueFileName}"
 
+    echo "DELTA: recorded value ${last_recorded_value}" 1>&2
+    
     if [[ -n "${last_recorded_value}" ]]
     then
 	if [[ "${current_value}" -lt "${last_recorded_value}"  ]]
@@ -81,8 +85,10 @@ function getDeltaForVal ()
     	    delta=$(( "${current_value}" - "${last_recorded_value}" ))
 	fi
     else
-    	delta=${current_value}
+    	delta=0
     fi
+
+    echo "DELTA: diff = ${delta}" 1>&2
 
     # return the new array
     echo ${delta}
