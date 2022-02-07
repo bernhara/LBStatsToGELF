@@ -1,7 +1,5 @@
 #! /bin/bash
 
-# $Id: $
-
 : ${SYSBUS:=sysbus}
 
 : ${LOOP_DELAY:=5m}
