@@ -99,14 +99,17 @@ makeStatLine ()
     model_HostName=$( getModelParameter "${model_for_mac_address}" 'HostName' )
     model_XORANGECOM_InterfaceTypes=$( getModelParameter "${model_for_mac_address}" 'X_ORANGE-COM_InterfaceType' )
 
-    stat_line_extends='"version": "1.1"'
-    stat_line_extends=${stat_line_extends}', "host":"s-ku2raph"'
-    stat_line_extends=${stat_line_extends}', "short_message":"LB wifi '${LOOP_DELAY}' stat for '${model_HostName}'"'
-    stat_line_extends=${stat_line_extends}', "lb_interface":"'${lb_interface}'"'
 
-    stat_line_extends=${stat_line_extends}', "HostName":"'${model_HostName}'"'
-    stat_line_extends=${stat_line_extends}', "IPAddress":"'${model_IPAddress}'"'
-    stat_line_extends=${stat_line_extends}', "X_ORANGE-COM_InterfaceTypes":"'${model_XORANGECOM_InterfaceTypes}'"'
+    stat_line=${stat_line}', "HostName":"'${model_HostName}'"'
+    stat_line=${stat_line}', "IPAddress":"'${model_IPAddress}'"'
+    stat_line=${stat_line}', "X_ORANGE-COM_InterfaceTypes":"'${model_XORANGECOM_InterfaceTypes}'"'
+
+    #
+    # EXTRA fields, not part of MIB
+    #
+
+    stat_line=${stat_line}', "X_lb_interface":"'${lb_interface}'"'
+    
 
     #
     # DELTA computations
@@ -115,15 +118,30 @@ makeStatLine ()
     do
 	mib_parameter_value=$( getMibParameter "${mib_data_for_mac}" "${mib_parameter_name}" )
 	delta=$( getDeltaForVal "${mac_address}" "${mib_parameter_value}" "${mib_parameter_name}" )
-	stat_line_extends=${stat_line_extends}', "X_'${mib_parameter_name}'_delta":'${delta}''
+	stat_line=${stat_line}', "X_'${mib_parameter_name}'_delta":'${delta}''
 
     done
+
+    full_stat_line="${
+
+    #
+    # convert to GELF syntax
+    #
+    
+    gelf_formated_fields=$(
+        echo "${stat_line} | \
+	    sed -e 's/\"\(.*\)\"[ \t]*:/\"_\1\":/g'
+    )
 
     #
     # build complete stat line
     #
 
-    json_extends="{ ${stat_line_extends} }"
+    json_gelf_fields_stat_line="{ ${stat_line} }"
+
+    gelf_tags='"version": "1.1"'
+    gelf_tags=${gelf_tags}', "host":"s-ku2raph"'
+    gelf_tags=${gelf_tags}', "short_message":"LB wifi '${LOOP_DELAY}' stat for '${model_HostName}'"'
 
     GELF_stat_to_send=$( echo "${stat_line}" | jq -c ". += ${json_extends}" )
     echo "GELF frame: ${GELF_stat_to_send}" 1>&2
