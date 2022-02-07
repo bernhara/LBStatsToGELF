@@ -72,9 +72,16 @@ function getDeltaForVal ()
 
     if [[ -n "${last_recorded_value}" ]]
     then
-    	delta=$(( "${current_value}" - "${last_recorded_value}" ))
+	if [[ "${current_value}" -lt "${last_recorded_value}"  ]]
+	then
+	    # cumulative counter has been reset
+	    # consider that the previous value is "0"
+	    delta=${current_value}
+	else
+    	    delta=$(( "${current_value}" - "${last_recorded_value}" ))
+	fi
     else
-    	delta=0
+    	delta=${current_value}
     fi
 
     # return the new array
@@ -188,7 +195,7 @@ do
     do
 
 	GELF_stat_line=$( makeStatLine "${d}" "wl0" )
-	echo -n "${GELF_stat_line}" | nc -w 0 -v -u "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
+	echo -n "${GELF_stat_line}" | nc -w 1 -v -u "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
 
     done
 
@@ -196,7 +203,7 @@ do
     do
 
 	GELF_stat_line=$( makeStatLine "${d}" "eth6" )
-	echo -n "${GELF_stat_line}" | nc -w 0 -v -u "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
+	echo -n "${GELF_stat_line}" | nc -w 1 -v -u "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
 
     done
 
