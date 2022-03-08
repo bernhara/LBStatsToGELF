@@ -182,33 +182,17 @@ do
 	${SYSBUS}  -MIBs
     )
 
-    WIFI24G_DEVICE_MAC_ADDRESSES=$(
-	echo "${FULL_MIB}" | \
-	    jq -c '.["status"] | .["wlanvap"] | .["wl0"] | .["AssociatedDevice" ] | .[] | ."MACAddress"' | \
-	    sed -e 's/^\"//' -e 's/\"$//'
-				)
+    interface_list="wl0 wlguest2 wlguest5 eth6"
 
-    WIFI5G_DEVICE_MAC_ADDRESSES=$(
-	echo "${FULL_MIB}" | \
-	    jq -c '.["status"] | .["wlanvap"] | .["eth6"] | .["AssociatedDevice" ] | .[] | ."MACAddress"' | \
-	    sed -e 's/^\"//' -e 's/\"$//'
-		  )
-
-    #WIFI24G_DEVICE_MAC_ADDRESSES=''
-    #WIFI5G_DEVICE_MAC_ADDRESSES="64:80:99:CB:C3:20"
-
-    for d in ${WIFI24G_DEVICE_MAC_ADDRESSES}
+    for interface in ${interface_list}
     do
-
-	GELF_stat_line=$( makeStatLine "${d}" "wl0" )
-	echo -n "${GELF_stat_line}" | nc -w 1 -v -u "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
-
-    done
-
-    for d in ${WIFI5G_DEVICE_MAC_ADDRESSES}
-    do
-
-	GELF_stat_line=$( makeStatLine "${d}" "eth6" )
+	mac_address_list=$(
+	    echo "${FULL_MIB}" | \
+		jq -c '.["status"] | .["wlanvap"] | .["'${interface}'"] | .["AssociatedDevice" ] | .[] | ."MACAddress"' | \
+		sed -e 's/^\"//' -e 's/\"$//'
+			)
+	
+	GELF_stat_line=$( makeStatLine "${d}" ${interface} )
 	echo -n "${GELF_stat_line}" | nc -w 1 -v -u "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
 
     done
