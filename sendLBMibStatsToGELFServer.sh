@@ -9,6 +9,8 @@
 
 : ${_mib_dum_file:='/tmp/lb_mib.txt'}
 
+: ${_nc_cmd:="nc -w 1 -v -u"}
+
 if [[ -z "${GELF_SERVER_HOSTNAME}" ]]
 then
     echo "ERROR: GELF_SERVER_HOSTNAME variable not set" 1>&2
@@ -105,7 +107,6 @@ makeStatLine ()
 	cat "${_mib_dum_file}" | \
 	    jq -c '.["status"] | .["wlanvap"] | .["'${lb_interface}'"] | .["AssociatedDevice" ] | ."'${mac_address}'"'
 		    )
-
     model_for_mac_address=$( ${SYSBUS} -model "Hosts.Host.${mac_address}" )
 
     model_IPAddress=$( getModelParameter "${model_for_mac_address}" 'IPAddress' )
@@ -193,8 +194,11 @@ do
 		sed -e 's/^\"//' -e 's/\"$//'
 			)
 	
-	GELF_stat_line=$( makeStatLine "${d}" ${interface} )
-	echo -n "${GELF_stat_line}" | nc -w 1 -v -u "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
+	for d in ${mac_address_list}
+	do
+	    GELF_stat_line=$( makeStatLine "${d}" ${interface} )
+	    echo -n "${GELF_stat_line}" | ${_nc_cmd} "${GELF_SERVER_HOSTNAME}" "${GELF_SERVER_UDP_PORT}"
+	done
 
     done
 
