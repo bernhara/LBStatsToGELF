@@ -7,6 +7,8 @@
 : ${GELF_SERVER_HOSTNAME:=''}
 : ${GELF_SERVER_UDP_PORT:=''}
 
+: ${_mib_dum_file:='/tmp/lb_mib.txt'}
+
 if [[ -z "${GELF_SERVER_HOSTNAME}" ]]
 then
     echo "ERROR: GELF_SERVER_HOSTNAME variable not set" 1>&2
@@ -100,7 +102,7 @@ makeStatLine ()
     lb_interface="$2"
 
     mib_data_for_mac=$(
-	${SYSBUS} -MIBs ${lb_interface} | \
+	cat "${_mib_dum_file}" | \
 	    jq -c '.["status"] | .["wlanvap"] | .["'${lb_interface}'"] | .["AssociatedDevice" ] | ."'${mac_address}'"'
 		    )
 
@@ -175,19 +177,18 @@ unquoteMacAddress ()
     echo "${unquoted_mac_address}"
 }
 
+rm "${_mib_dum_file}"
 while true
 do
 
-    FULL_MIB=$(
-	${SYSBUS}  -MIBs
-    )
+    ${SYSBUS}  -MIBs > "${_mib_dum_file}"
 
     interface_list="wl0 wlguest2 wlguest5 eth6"
 
     for interface in ${interface_list}
     do
 	mac_address_list=$(
-	    echo "${FULL_MIB}" | \
+	    cat "${_mib_dum_file}" | \
 		jq -c '.["status"] | .["wlanvap"] | .["'${interface}'"] | .["AssociatedDevice" ] | .[] | ."MACAddress"' | \
 		sed -e 's/^\"//' -e 's/\"$//'
 			)
