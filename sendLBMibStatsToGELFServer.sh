@@ -129,7 +129,7 @@ makeStatLine ()
     #
     # DELTA computations
     #
-    for mib_parameter_name in Rx_Retransmissions Tx_Retransmissions TxBytes RxBytes RxPacketCount TxPacketCount
+    for mib_parameter_name in Rx_Retransmissions Tx_Retransmissions Tx_RetransmissionsFailed TxBytes RxBytes RxPacketCount TxPacketCount
     do
 	mib_parameter_value=$( getMibParameter "${mib_data_for_mac}" "${mib_parameter_name}" )
 	delta=$( getDeltaForVal "${mac_address}" "${mib_parameter_value}" "${mib_parameter_name}" )
