@@ -103,6 +103,7 @@ makeStatLine ()
     mac_address="$1"
     lb_interface="$2"
 
+
     mib_data_for_mac=$(
 	cat "${_mib_dum_file}" | \
 	    jq -c '.["status"] | .["wlanvap"] | .["'${lb_interface}'"] | .["AssociatedDevice" ] | ."'${mac_address}'"'
@@ -111,8 +112,25 @@ makeStatLine ()
 
     model_IPAddress=$( getModelParameter "${model_for_mac_address}" 'IPAddress' )
     model_HostName=$( getModelParameter "${model_for_mac_address}" 'HostName' )
-    model_XORANGECOM_InterfaceTypes=$( getModelParameter "${model_for_mac_address}" 'X_ORANGE-COM_InterfaceType' )
 
+    model_XORANGECOM_InterfaceTypes=$( getModelParameter "${model_for_mac_address}" 'X_ORANGE-COM_InterfaceType' )
+    if [[ -z "${model_XORANGECOM_InterfaceTypes}" ]]
+    then  
+	# FIXME: "X_ORANGE-COM_InterfaceType" has desappeared in latest firmware.
+	# Should be computed from the interface configuration
+	# Meanwhile, set it statically
+	case "${lb_interface}" in
+	    wl0|wlguest2|wlguest5)
+		model_XORANGECOM_InterfaceTypes="802.11-2.4GHz"
+		;;
+	    eth6)
+		model_XORANGECOM_InterfaceTypes="802.11-5GHz"
+		;;
+	    *)
+		model_XORANGECOM_InterfaceTypes="_ERROR_ interface not matched"
+	;;
+	esac
+    fi
 
     stat_line_extends=''
 
