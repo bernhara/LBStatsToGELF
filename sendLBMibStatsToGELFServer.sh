@@ -108,12 +108,15 @@ makeStatLine ()
 	cat "${_mib_dum_file}" | \
 	    jq -c '.["status"] | .["wlanvap"] | .["'${lb_interface}'"] | .["AssociatedDevice" ] | ."'${mac_address}'"'
 		    )
-    model_for_mac_address=$( ${SYSBUS} -model "Hosts.Host.${mac_address}" )
+    model_for_mac_address=$( ${SYSBUS} -object "sysbus.Devices.Device.${mac_address}" )
 
     model_IPAddress=$( getModelParameter "${model_for_mac_address}" 'IPAddress' )
-    model_HostName=$( getModelParameter "${model_for_mac_address}" 'HostName' )
+    model_HostName=$( getModelParameter "${model_for_mac_address}" 'Name' )
 
-    model_XORANGECOM_InterfaceTypes=$( getModelParameter "${model_for_mac_address}" 'X_ORANGE-COM_InterfaceType' )
+    model_OperatingStandard=$( getModelParameter "${model_for_mac_address}" 'OperatingStandard' )
+
+    # FIXME: for backword compatibility
+    model_XORANGECOM_InterfaceTypes=''
     if [[ -z "${model_XORANGECOM_InterfaceTypes}" ]]
     then  
 	# FIXME: "X_ORANGE-COM_InterfaceType" has desappeared in latest firmware.
@@ -136,6 +139,7 @@ makeStatLine ()
 
     stat_line_extends=${stat_line_extends}', "HostName":"'${model_HostName}'"'
     stat_line_extends=${stat_line_extends}', "IPAddress":"'${model_IPAddress}'"'
+    stat_line_extends=${stat_line_extends}', "OperatingStandard":"'${model_OperatingStandard}'"'
     stat_line_extends=${stat_line_extends}', "X_ORANGE-COM_InterfaceTypes":"'${model_XORANGECOM_InterfaceTypes}'"'
 
     #
@@ -143,7 +147,7 @@ makeStatLine ()
     #
 
     stat_line_extends=${stat_line_extends}', "X_lb_interface":"'${lb_interface}'"'
-    
+
     #
     # DELTA computations
     #
@@ -196,7 +200,7 @@ unquoteMacAddress ()
     echo "${unquoted_mac_address}"
 }
 
-rm "${_mib_dum_file}"
+rm -f "${_mib_dum_file}"
 while true
 do
 
