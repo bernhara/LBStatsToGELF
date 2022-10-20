@@ -65,7 +65,7 @@ function getDeltaForVal ()
     current_value="$2"
     values_name="$3"
 
-    echo "DELTA: for ${1}/${3}/${2}" 1>&2
+    echo "INFO: DELTA: for ${1}/${3}/${2}" 1>&2
 
     lastValueFileName="${_tmp_dir}/${mac_address}.${values_name}"
     if [[ -f "${lastValueFileName}" ]]
@@ -76,7 +76,7 @@ function getDeltaForVal ()
     # store last value
     echo "${current_value}" > "${lastValueFileName}"
 
-    echo "DELTA: recorded value ${last_recorded_value}" 1>&2
+    echo "INFO: DELTA: recorded value ${last_recorded_value}" 1>&2
     
     if [[ -n "${last_recorded_value}" ]]
     then
@@ -92,7 +92,7 @@ function getDeltaForVal ()
     	delta=0
     fi
 
-    echo "DELTA: diff = ${delta}" 1>&2
+    echo "INFO: DELTA: diff = ${delta}" 1>&2
 
     # return the new array
     echo ${delta}
@@ -186,7 +186,7 @@ makeStatLine ()
     gelf_tags=${gelf_tags}', "short_message":"LB wifi '${LOOP_DELAY}' stat for '${model_HostName}'"'
 
     GELF_stat_to_send=$( echo "{ ${gelf_tags} }" | jq -c ". += ${gelf_formated_fields}" )
-    echo "GELF frame: ${GELF_stat_to_send}" 1>&2
+    echo "INFO: GELF frame: ${GELF_stat_to_send}" 1>&2
 	
     echo "${GELF_stat_to_send}"
 }
